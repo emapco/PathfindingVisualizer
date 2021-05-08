@@ -5,7 +5,7 @@ from math import inf
 
 from PyQt5.QtWidgets import QWidget
 
-from Node import Node
+from Node import Node, DESERT_WEIGHT, FOREST_WEIGHT
 
 """
 Adapted from http://theory.stanford.edu/~amitp/GameProgramming/#pathfinding
@@ -16,20 +16,13 @@ class Graph:
     def __init__(self, columns: int, rows: int):
         self.columns = columns
         self.rows = rows
-        self.barriers = []
-        self.weights = {}
+        self.barrier_nodes = []
 
     """
     ##########################################################################
                                 Public Functions
     ##########################################################################
     """
-    def in_bounds(self, node: Node) -> bool:
-        return 0 <= node.x < self.columns and 0 <= node.y < self.rows
-
-    def is_passable(self, node: Node) -> bool:
-        return node not in self.barriers
-
     def neighbors(self, node: Node):
         x = node.x
         y = node.y
@@ -39,9 +32,11 @@ class Graph:
         results = filter(self.is_passable, results)
         return results
 
-    # cost only accounts for weight from the to_node
-    def cost(self, from_node: Node, to_node: Node) -> float:
-        return self.weights.get(to_node, 1)
+    def in_bounds(self, node: Node) -> bool:
+        return 0 <= node.x < self.columns and 0 <= node.y < self.rows
+
+    def is_passable(self, node: Node) -> bool:
+        return node not in self.barrier_nodes
 
     def bfs(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = Queue()
@@ -66,6 +61,37 @@ class Graph:
                     grid.repaint()
 
         return self.reconstruct_path(came_from, start, end)
+
+
+    """
+    ##########################################################################
+                                Static Functions
+    ##########################################################################
+    """
+
+    @staticmethod
+    def reconstruct_path(came_from: Dict[Node, Node], start: Node, end: Node) -> []:
+        current = end
+        path = []
+        while current != start:
+            path.append(current)
+            current = came_from[current]
+        path.reverse()
+
+        try:
+            path.remove(end)
+        except ValueError:
+            pass
+
+        return path
+
+
+class WeightedGraph(Graph):
+    def __init__(self, columns: int, rows: int):
+        super().__init__(columns, rows)
+        self.weights = {}
+        self.forest_nodes = []
+        self.desert_nodes = []
 
     def a_star(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = PriorityQueue()
@@ -99,11 +125,11 @@ class Graph:
     def dijkstra(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = PriorityQueue()
         frontier.put(start, 0)
-        grid.add_frontier(start)
         came_from = dict()
         cost_so_far = dict()
         came_from[start] = None
         cost_so_far[start] = 0
+        grid.add_frontier(start)
 
         while not frontier.empty():
             current = frontier.get()
@@ -125,43 +151,27 @@ class Graph:
 
         return self.reconstruct_path(came_from, start, end)
 
-    """
-    ##########################################################################
-                                Static Functions
-    ##########################################################################
-    """
+    # cost only accounts for weight from the to_node
+    def cost(self, from_node: Node, to_node: Node) -> int:
+        self.set_node_weight(to_node)
+        return to_node.weight
+
+    def set_node_weight(self, node: Node):
+        if node in self.forest_nodes:
+            node.weight = FOREST_WEIGHT
+        if node in self.desert_nodes:
+            node.weight = DESERT_WEIGHT
+
     @staticmethod
     def heuristic(n1: Node, n2: Node) -> float:
         (x1, y1) = n1.get_coordinates()
         (x2, y2) = n2.get_coordinates()
         return abs(x1 - x2) + abs(y1 - y2)
 
-    @staticmethod
-    def reconstruct_path(came_from: Dict[Node, Node], start: Node, end: Node) -> []:
-        current = end
-        path = []
-        while current != start:
-            path.append(current)
-            current = came_from[current]
-        path.reverse()
-
-        try:
-            path.remove(end)
-        except ValueError:
-            pass
-
-        return path
-
 
 class PriorityQueue:
     def __init__(self):
         self.elements = []
-
-    """
-    ##########################################################################
-                                Public Functions
-    ##########################################################################
-    """
 
     def empty(self) -> bool:
         return not self.elements

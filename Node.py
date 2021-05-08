@@ -1,10 +1,15 @@
+from dataclasses import dataclass
 from typing import Union
+
+DESERT_WEIGHT = 3
+FOREST_WEIGHT = 2
 
 
 class Node:
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int, weight=1):
         self._x = x
         self._y = y
+        self._weight = weight
 
     """
     ##########################################################################
@@ -36,6 +41,15 @@ class Node:
     @y.setter
     def y(self, value):
         self._y = value
+
+    @property
+    def weight(self) -> int:
+        return self._weight
+
+    @weight.setter
+    def weight(self, value):
+        self._weight = value
+
 
     """
     ##########################################################################

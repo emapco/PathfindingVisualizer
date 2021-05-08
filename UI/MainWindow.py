@@ -2,10 +2,10 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget
 
-from Graph import Graph
+from Graph import Graph, WeightedGraph
 from Node import Node
-from package.GridWidget import Grid
-from package.ParametersDialog import ParametersPopup
+from UI.GridWidget import Grid
+from UI.ParametersDialog import ParametersPopup
 
 
 class MainWindow(QMainWindow):
@@ -19,9 +19,11 @@ class MainWindow(QMainWindow):
         self.grid.setStyleSheet('background-color: white;')
         self.start_button = QPushButton('Start animation')
         self.reset_button = QPushButton('Reset grid')
+        self.path_button = QPushButton('Clear path')
         self.change_button = QPushButton('Change parameters')
         self.buttons_layout.addWidget(self.start_button)
         self.buttons_layout.addWidget(self.reset_button)
+        self.buttons_layout.addWidget(self.path_button)
         self.buttons_layout.addWidget(self.change_button)
         self.layout.addWidget(self.grid)
         self.layout.addLayout(self.buttons_layout)
@@ -32,17 +34,21 @@ class MainWindow(QMainWindow):
         self.reset_button.clicked.connect(self.clear_grid)
         self.change_button.clicked.connect(self.show_parameter_popup)
         self.start_button.clicked.connect(self.generate_path)
+        self.path_button.clicked.connect(self.clear_path)
 
         self.parameters = ParametersPopup()
         self.parameters.buttonBox.buttons()[0].clicked.connect(self.update_end_point_rects)
 
-        self.graph = Graph(self.grid.columns, self.grid.rows)
+        self.graph = WeightedGraph(self.grid.columns, self.grid.rows)
 
     def closeEvent(self, event) -> None:
         sys.exit()
 
     def clear_grid(self):
         self.grid.clear_all_rectangles()
+
+    def clear_path(self):
+        self.grid.clear_path()
 
     def show_parameter_popup(self):
         self.parameters.raise_()
@@ -58,7 +64,9 @@ class MainWindow(QMainWindow):
 
     def generate_path(self):
         self.grid.clear_path()
-        self.graph.barriers = self.grid.barrier_rects
+        self.graph.barrier_nodes = self.grid.barrier_rects
+        self.graph.desert_nodes = self.grid.desert_rects
+        self.graph.forest_nodes = self.grid.forest_rects
         path = []
 
         start = self.grid.startpoint_rect

@@ -1,10 +1,10 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QRectF, QEvent
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import QWidget
 from qtpy import QtCore
 
-from Node import Node
+from Node import Node, DESERT_WEIGHT, FOREST_WEIGHT
 
 
 class Grid(QWidget):
@@ -16,6 +16,8 @@ class Grid(QWidget):
         self.rows = 30
 
         self.barrier_rects = set()
+        self.desert_rects = set()
+        self.forest_rects = set()
         self.startpoint_rect = Node(0, 0)
         self.endpoint_rect = Node(39, 29)
         self.path_rects = set()
@@ -54,6 +56,8 @@ class Grid(QWidget):
 
         # draw barrier rectangles
         self.paintRect(qp, Qt.black, self.barrier_rects)
+        self.paintRect(qp, Qt.darkGreen, self.forest_rects)
+        self.paintRect(qp, QColor(255, 140, 0), self.desert_rects)
         self.paintRect(qp, Qt.yellow, self.path_rects)
         self.paintRect(qp, Qt.blue, self.frontier_rects)
         self.paintRect(qp, Qt.green, (self.startpoint_rect,))
@@ -80,23 +84,29 @@ class Grid(QWidget):
             col = int(event.x() // self.square_size)
             row = int(event.y() // self.square_size)
 
-            if self.rect().contains(mouse_position):
-                modifiers = QtWidgets.QApplication.keyboardModifiers()
-                if modifiers == QtCore.Qt.ControlModifier:
-                    try:
-                        self.barrier_rects.remove(Node(col, row))
-                    except KeyError:
-                        pass
-                else:
-                    self.barrier_rects.add(Node(col, row))
+            self.add_node(col, row, mouse_position)
 
         if event.type() == QEvent.MouseButtonRelease:
             self.redraw_rectangles()
 
         return False
 
+    def add_node(self, col, row, mouse_position):
+        if self.rect().contains(mouse_position):
+            modifiers = QtWidgets.QApplication.keyboardModifiers()
+            if modifiers == QtCore.Qt.ControlModifier:
+                self.remove_terrain_rect(col, row)
+            elif modifiers == QtCore.Qt.ShiftModifier:
+                self.desert_rects.add(Node(col, row))
+            elif modifiers == QtCore.Qt.AltModifier:
+                self.forest_rects.add(Node(col, row))
+            else:
+                self.barrier_rects.add(Node(col, row))
+
     def clear_all_rectangles(self):
         self.barrier_rects.clear()
+        self.forest_rects.clear()
+        self.desert_rects.clear()
         self.clear_path()
 
     def clear_path(self):
@@ -112,3 +122,10 @@ class Grid(QWidget):
 
     def remove_frontier(self, node: Node):
         self.frontier_rects.remove(node)
+
+    def remove_terrain_rect(self, col, row):
+        for terrain in self.barrier_rects, self.forest_rects, self.desert_rects:
+            try:
+                terrain.remove(Node(col, row))
+            except KeyError:
+                pass
