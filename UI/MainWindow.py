@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         self.grid = Grid()
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setStyleSheet('background-color: white;')
-        self.start_button = QPushButton('Start animation')
+        self.start_button = QPushButton('Start')
         self.reset_button = QPushButton('Reset grid')
         self.path_button = QPushButton('Clear path')
         self.change_button = QPushButton('Change parameters')
@@ -37,32 +37,33 @@ class MainWindow(QMainWindow):
         self.path_button.clicked.connect(self.clear_path)
 
         self.parameters = ParametersPopup()
-        self.parameters.buttonBox.buttons()[0].clicked.connect(self.update_end_point_rects)
+        self.parameters.buttonBox.buttons()[0].clicked.connect(self.update_grid_with_parameters)
 
         self.graph = WeightedGraph(self.grid.columns, self.grid.rows)
 
     def closeEvent(self, event) -> None:
         sys.exit()
 
-    def clear_grid(self):
+    def clear_grid(self) -> None:
         self.grid.clear_all_rectangles()
 
-    def clear_path(self):
+    def clear_path(self) -> None:
         self.grid.clear_path()
 
-    def show_parameter_popup(self):
+    def show_parameter_popup(self) -> None:
         self.parameters.raise_()
         self.parameters.show()
 
-    def update_end_point_rects(self):
+    def update_grid_with_parameters(self) -> None:
         start_row = self.parameters.start_row
         start_col = self.parameters.start_col
         end_row = self.parameters.end_row
         end_col = self.parameters.end_col
         self.grid.startpoint_rect = Node(start_col, start_row)
         self.grid.endpoint_rect = Node(end_col, end_row)
+        self.grid.visualize = self.parameters.visualize_checkBox.isChecked()
 
-    def generate_path(self):
+    def generate_path(self) -> None:
         self.grid.clear_path()
         self.graph.barrier_nodes = self.grid.barrier_rects
         self.graph.desert_nodes = self.grid.desert_rects

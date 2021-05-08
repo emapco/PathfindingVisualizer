@@ -4,7 +4,7 @@ from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import QWidget
 from qtpy import QtCore
 
-from Node import Node, DESERT_WEIGHT, FOREST_WEIGHT
+from Node import Node
 
 
 class Grid(QWidget):
@@ -15,6 +15,8 @@ class Grid(QWidget):
         self.columns = 40
         self.rows = 30
 
+        self.visualize = True
+
         self.barrier_rects = set()
         self.desert_rects = set()
         self.forest_rects = set()
@@ -23,7 +25,7 @@ class Grid(QWidget):
         self.path_rects = set()
         self.frontier_rects = set()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QEvent) -> None:
         # compute the square size based on the aspect ratio, assuming that the
         # column and row numbers are fixed
         reference = self.width() * self.rows / self.columns
@@ -119,6 +121,8 @@ class Grid(QWidget):
 
     def add_frontier(self, node: Node):
         self.frontier_rects.add(node)
+        if self.visualize:
+            self.repaint()
 
     def remove_frontier(self, node: Node):
         self.frontier_rects.remove(node)

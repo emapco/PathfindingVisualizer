@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QDialog, QButtonGroup
 class ParametersPopup(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setFixedHeight(130)
+        self.setFixedHeight(160)
         self.setFixedWidth(320)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAttribute(Qt.WA_QuitOnClose, True)
@@ -18,8 +18,9 @@ class ParametersPopup(QDialog):
         self.a_star_radio.setGeometry(QtCore.QRect(250, 10, 82, 17))
         self.a_star_radio.setObjectName("a_star_radio")
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
-        self.buttonBox.setGeometry(QtCore.QRect(80, 100, 156, 23))
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setGeometry(QtCore.QRect(0, 130, 311, 23))
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
         self.end_textbox = QtWidgets.QPlainTextEdit(self)
         self.end_textbox.setGeometry(QtCore.QRect(70, 50, 50, 21))
@@ -43,6 +44,9 @@ class ParametersPopup(QDialog):
         self.dijkstra_radio = QtWidgets.QRadioButton(self)
         self.dijkstra_radio.setGeometry(QtCore.QRect(250, 40, 82, 16))
         self.dijkstra_radio.setObjectName("dijkstra_radio")
+        self.visualize_checkBox = QtWidgets.QCheckBox(self)
+        self.visualize_checkBox.setGeometry(QtCore.QRect(10, 100, 121, 17))
+        self.visualize_checkBox.setObjectName("visualize_checkBox")
 
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -55,6 +59,8 @@ class ParametersPopup(QDialog):
         self.dijkstra_radio.setText("Dijkstra")
         self.start_textbox.setPlainText("0, 0")
         self.end_textbox.setPlainText("39, 29")
+        self.visualize_checkBox.setText("visualize algorithm")
+        self.visualize_checkBox.setChecked(True)
         self.bfs_radio.setChecked(True)
 
         # set start/end row&col values using default text
@@ -77,29 +83,34 @@ class ParametersPopup(QDialog):
     def set_previous_variables(self):
         self.previous_start_text = self.start_textbox.toPlainText()
         self.previous_end_text = self.end_textbox.toPlainText()
+        self.previous_visualize = self.visualize_checkBox.isChecked()
         self.previous_a_star_radio_state = self.a_star_radio.isChecked()
         self.previous_bfs_radio_state = self.bfs_radio.isChecked()
         self.previous_dijkstra_radio_state = self.dijkstra_radio.isChecked()
 
     def set_start_end_points(self):
-        start_point_values = self.start_textbox.toPlainText().strip().split(",", maxsplit=1)
-        end_point_values = self.end_textbox.toPlainText().split(",", maxsplit=1)
-        self.start_col = int(start_point_values[0].strip())
-        self.start_row = int(start_point_values[1].strip())
-        self.end_col = int(end_point_values[0].strip())
-        self.end_row = int(end_point_values[1].strip())
+        try:
+            start_point_values = self.start_textbox.toPlainText().strip().split(",", maxsplit=1)
+            end_point_values = self.end_textbox.toPlainText().split(",", maxsplit=1)
+            self.start_col = int(start_point_values[0].strip())
+            self.start_row = int(start_point_values[1].strip())
+            self.end_col = int(end_point_values[0].strip())
+            self.end_row = int(end_point_values[1].strip())
+            return True
+        except (ValueError, IndexError) as e:
+            return False
 
     def ok_button(self):
-        try:
-            self.set_start_end_points()  # test whether input are valid integers
-            self.set_previous_variables()  # changes have been confirmed so update previous variables
-        except ValueError:
-            return
-        self.close()
+        valid_values = self.set_start_end_points()  # test whether input is valid
+
+        if valid_values:
+            self.set_previous_variables()  # changes are valid and confirmed so update previous variables
+            self.close()
 
     def cancel_button(self):
         self.start_textbox.setPlainText(self.previous_start_text)  # user cancelled so restore previous values
         self.end_textbox.setPlainText(self.previous_end_text)
+        self.visualize_checkBox.setChecked(self.previous_visualize)
 
         # set setExclusive to False so radio states can be reset to previous state
         # otherwise radio buttons cannot be set to False individually

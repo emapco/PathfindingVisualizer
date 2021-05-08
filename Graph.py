@@ -5,11 +5,14 @@ from math import inf
 
 from PyQt5.QtWidgets import QWidget
 
-from Node import Node, DESERT_WEIGHT, FOREST_WEIGHT
+from Node import Node
 
 """
 Adapted from http://theory.stanford.edu/~amitp/GameProgramming/#pathfinding
 """
+DEFAULT_WEIGHT = 1
+FOREST_WEIGHT = 2
+DESERT_WEIGHT = 3
 
 
 class Graph:
@@ -58,17 +61,14 @@ class Graph:
                     came_from[next] = current
 
                     grid.add_frontier(next)
-                    grid.repaint()
 
         return self.reconstruct_path(came_from, start, end)
-
 
     """
     ##########################################################################
                                 Static Functions
     ##########################################################################
     """
-
     @staticmethod
     def reconstruct_path(came_from: Dict[Node, Node], start: Node, end: Node) -> []:
         current = end
@@ -89,10 +89,14 @@ class Graph:
 class WeightedGraph(Graph):
     def __init__(self, columns: int, rows: int):
         super().__init__(columns, rows)
-        self.weights = {}
         self.forest_nodes = []
         self.desert_nodes = []
 
+    """
+    ##########################################################################
+                                Public Functions
+    ##########################################################################
+    """
     def a_star(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = PriorityQueue()
         frontier.put(start, 0)
@@ -118,7 +122,6 @@ class WeightedGraph(Graph):
                     came_from[next] = current
 
                     grid.add_frontier(next)
-                    grid.repaint()
 
         return self.reconstruct_path(came_from, start, end)
 
@@ -147,25 +150,27 @@ class WeightedGraph(Graph):
                     came_from[next] = current
 
                     grid.add_frontier(next)
-                    grid.repaint()
 
         return self.reconstruct_path(came_from, start, end)
 
     # cost only accounts for weight from the to_node
     def cost(self, from_node: Node, to_node: Node) -> int:
-        self.set_node_weight(to_node)
-        return to_node.weight
+        weight = DEFAULT_WEIGHT
+        if to_node in self.forest_nodes:
+            weight = FOREST_WEIGHT
+        if to_node in self.desert_nodes:
+            weight = DESERT_WEIGHT
+        return weight
 
-    def set_node_weight(self, node: Node):
-        if node in self.forest_nodes:
-            node.weight = FOREST_WEIGHT
-        if node in self.desert_nodes:
-            node.weight = DESERT_WEIGHT
-
+    """
+    ##########################################################################
+                                Static Functions
+    ##########################################################################
+    """
     @staticmethod
     def heuristic(n1: Node, n2: Node) -> float:
-        (x1, y1) = n1.get_coordinates()
-        (x2, y2) = n2.get_coordinates()
+        x1, y1 = n1.get_coordinates()
+        x2, y2 = n2.get_coordinates()
         return abs(x1 - x2) + abs(y1 - y2)
 
 

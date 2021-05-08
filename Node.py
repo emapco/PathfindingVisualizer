@@ -1,22 +1,17 @@
 from dataclasses import dataclass
 from typing import Union
 
-DESERT_WEIGHT = 3
-FOREST_WEIGHT = 2
-
 
 class Node:
-    def __init__(self, x: int, y: int, weight=1):
+    def __init__(self, x: int, y: int):
         self._x = x
         self._y = y
-        self._weight = weight
 
     """
     ##########################################################################
                                 Public Functions
     ##########################################################################
     """
-
     def get_coordinates(self) -> (int, int):
         return self._x, self._y
 
@@ -25,7 +20,6 @@ class Node:
                                 Properties
     ##########################################################################
     """
-
     @property
     def x(self) -> int:
         return self._x
@@ -42,26 +36,16 @@ class Node:
     def y(self, value):
         self._y = value
 
-    @property
-    def weight(self) -> int:
-        return self._weight
-
-    @weight.setter
-    def weight(self, value):
-        self._weight = value
-
-
     """
     ##########################################################################
                                 Built-In Functions
     ##########################################################################
     """
-
     def __str__(self) -> str:
         return f'Node({self._x},{self._y})'
 
     def __repr__(self) -> str:
-        return self.__str__()
+        return self.__str__() + f'-{id(self)}'
 
     def __key(self) -> (int, int):
         return self._x, self._y
@@ -93,3 +77,11 @@ class Node:
         if isinstance(other, Node):
             return sum(self.get_coordinates()) >= sum(other.get_coordinates())
         return NotImplemented
+
+
+if __name__ == '__main__':
+    node = Node(0,0)
+    node1 = Node(0, 1)
+    l = [node, node1]
+    print(node)
+    print(l)
