@@ -1,29 +1,23 @@
+import random
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QRectF, QEvent
 from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import QWidget
 from qtpy import QtCore
 
-from Node import Node
+from node import Node
+from grid import Grid
 
 
-class Grid(QWidget):
+class GridBoard(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.installEventFilter(self)
         self.setMinimumSize(800, 600)
         self.columns = 40
         self.rows = 30
-
-        self.visualize = True
-
-        self.barrier_rects = set()
-        self.desert_rects = set()
-        self.forest_rects = set()
-        self.startpoint_rect = Node(0, 0)
-        self.endpoint_rect = Node(39, 29)
-        self.path_rects = set()
-        self.frontier_rects = set()
+        self.grid = Grid()
 
     def resizeEvent(self, event: QEvent) -> None:
         # compute the square size based on the aspect ratio, assuming that the
@@ -57,16 +51,15 @@ class Grid(QWidget):
             x += self.square_size
 
         # draw barrier rectangles
-        self.paintRect(qp, Qt.black, self.barrier_rects)
-        self.paintRect(qp, Qt.darkGreen, self.forest_rects)
-        self.paintRect(qp, QColor(255, 140, 0), self.desert_rects)
-        self.paintRect(qp, Qt.yellow, self.path_rects)
-        self.paintRect(qp, Qt.blue, self.frontier_rects)
-        self.paintRect(qp, Qt.green, (self.startpoint_rect,))
-        self.paintRect(qp, Qt.red, (self.endpoint_rect,))
+        self.paintRect(qp, Qt.black, self.grid.barrier_nodes)
+        self.paintRect(qp, Qt.darkGreen, self.grid.forest_nodes)
+        self.paintRect(qp, QColor(255, 140, 0), self.grid.desert_nodes)
+        self.paintRect(qp, Qt.yellow, self.grid.path_nodes)
+        self.paintRect(qp, Qt.blue, self.grid.frontier_nodes)
+        self.paintRect(qp, Qt.green, (self.grid.startpoint_node,))
+        self.paintRect(qp, Qt.red, (self.grid.endpoint_node,))
 
     def paintRect(self, qp, color, rects):
-        # center the grid
         left = (self.width() - self.grid_width) / 2
         top = (self.height() - self.grid_height) / 2
 
@@ -95,41 +88,43 @@ class Grid(QWidget):
 
     def add_node(self, col, row, mouse_position):
         if self.rect().contains(mouse_position):
+            node = Node(col, row)
             modifiers = QtWidgets.QApplication.keyboardModifiers()
             if modifiers == QtCore.Qt.ControlModifier:
-                self.remove_terrain_rect(col, row)
+                self.grid.remove_terrain_nodes(node)
             elif modifiers == QtCore.Qt.ShiftModifier:
-                self.desert_rects.add(Node(col, row))
+                self.grid.add_desert_node(node)
             elif modifiers == QtCore.Qt.AltModifier:
-                self.forest_rects.add(Node(col, row))
+                self.grid.add_forest_node(node)
             else:
-                self.barrier_rects.add(Node(col, row))
+                self.grid.add_barrier_node(node)
 
     def clear_all_rectangles(self):
-        self.barrier_rects.clear()
-        self.forest_rects.clear()
-        self.desert_rects.clear()
+        self.grid.clear_terrain_nodes()
         self.clear_path()
 
     def clear_path(self):
-        self.path_rects.clear()
-        self.frontier_rects.clear()
+        self.grid.path_nodes.clear()
+        self.grid.frontier_nodes.clear()
         self.update()
 
     def redraw_rectangles(self):
         self.update()
 
     def add_frontier(self, node: Node):
-        self.frontier_rects.add(node)
-        if self.visualize:
+        self.grid.add_frontier_node(node)
+        n = random.random()
+        if self.grid.visualize and n >= 0.5:
             self.repaint()
 
     def remove_frontier(self, node: Node):
-        self.frontier_rects.remove(node)
+        self.grid.remove_frontier_node(node)
 
-    def remove_terrain_rect(self, col, row):
-        for terrain in self.barrier_rects, self.forest_rects, self.desert_rects:
-            try:
-                terrain.remove(Node(col, row))
-            except KeyError:
-                pass
+    def get_default_weight(self):
+        return self.grid.default_weight
+
+    def get_forest_weight(self):
+        return self.grid.forest_weight
+
+    def get_desert_weight(self):
+        return self.grid.desert_weight

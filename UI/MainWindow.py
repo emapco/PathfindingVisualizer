@@ -2,9 +2,9 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget
 
-from Graph import Graph, WeightedGraph
-from Node import Node
-from UI.GridWidget import Grid
+from graph import Graph, WeightedGraph
+from node import Node
+from UI.GridWidget import GridBoard
 from UI.ParametersDialog import ParametersPopup
 
 
@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Pathfinding Algorithm Visualizer")
         self.layout = QVBoxLayout()
         self.buttons_layout = QHBoxLayout()
-        self.grid = Grid()
+        self.grid = GridBoard()
         self.grid.setContentsMargins(0, 0, 0, 0)
         self.grid.setStyleSheet('background-color: white;')
         self.start_button = QPushButton('Start')
@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.path_button.clicked.connect(self.clear_path)
 
         self.parameters = ParametersPopup()
-        self.parameters.buttonBox.buttons()[0].clicked.connect(self.update_grid_with_parameters)
+        self.parameters.buttonBox.accepted.connect(self.update_grid_with_parameters)
 
         self.graph = WeightedGraph(self.grid.columns, self.grid.rows)
 
@@ -59,19 +59,21 @@ class MainWindow(QMainWindow):
         start_col = self.parameters.start_col
         end_row = self.parameters.end_row
         end_col = self.parameters.end_col
-        self.grid.startpoint_rect = Node(start_col, start_row)
-        self.grid.endpoint_rect = Node(end_col, end_row)
-        self.grid.visualize = self.parameters.visualize_checkBox.isChecked()
+        self.grid.grid.startpoint_node = Node(start_col, start_row)
+        self.grid.grid.endpoint_node = Node(end_col, end_row)
+        self.grid.grid.visualize = self.parameters.visualize_checkBox.isChecked()
+        self.grid.grid.desert_weight = self.parameters.desert_weight
+        self.grid.grid.forest_weight = self.parameters.forest_weight
 
     def generate_path(self) -> None:
         self.grid.clear_path()
-        self.graph.barrier_nodes = self.grid.barrier_rects
-        self.graph.desert_nodes = self.grid.desert_rects
-        self.graph.forest_nodes = self.grid.forest_rects
+        self.graph.barrier_nodes = self.grid.grid.barrier_nodes
+        self.graph.desert_nodes = self.grid.grid.desert_nodes
+        self.graph.forest_nodes = self.grid.grid.forest_nodes
         path = []
 
-        start = self.grid.startpoint_rect
-        end = self.grid.endpoint_rect
+        start = self.grid.grid.startpoint_node
+        end = self.grid.grid.endpoint_node
         if self.parameters.a_star_radio.isChecked():
             path = self.graph.a_star(start, end, self.grid)
         elif self.parameters.dijkstra_radio.isChecked():
@@ -81,7 +83,7 @@ class MainWindow(QMainWindow):
 
         self.grid.clear_path()
         for node in path:
-            self.grid.path_rects.add(node)
+            self.grid.grid.add_path_node(node)
             self.grid.redraw_rectangles()
 
 

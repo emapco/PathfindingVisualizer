@@ -6,8 +6,8 @@ from PyQt5.QtWidgets import QDialog, QButtonGroup
 class ParametersPopup(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setFixedHeight(160)
-        self.setFixedWidth(320)
+        self.setFixedHeight(205)
+        self.setFixedWidth(310)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAttribute(Qt.WA_QuitOnClose, True)
         self.setObjectName("Parameters")
@@ -18,7 +18,7 @@ class ParametersPopup(QDialog):
         self.a_star_radio.setGeometry(QtCore.QRect(250, 10, 82, 17))
         self.a_star_radio.setObjectName("a_star_radio")
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
-        self.buttonBox.setGeometry(QtCore.QRect(0, 130, 311, 23))
+        self.buttonBox.setGeometry(QtCore.QRect(0, 170, 311, 23))
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
@@ -45,8 +45,24 @@ class ParametersPopup(QDialog):
         self.dijkstra_radio.setGeometry(QtCore.QRect(250, 40, 82, 16))
         self.dijkstra_radio.setObjectName("dijkstra_radio")
         self.visualize_checkBox = QtWidgets.QCheckBox(self)
-        self.visualize_checkBox.setGeometry(QtCore.QRect(10, 100, 121, 17))
+        self.visualize_checkBox.setGeometry(QtCore.QRect(180, 130, 120, 17))
         self.visualize_checkBox.setObjectName("visualize_checkBox")
+        self.forest_textbox = QtWidgets.QPlainTextEdit(self)
+        self.forest_textbox.setGeometry(QtCore.QRect(90, 90, 30, 21))
+        self.forest_textbox.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.forest_textbox.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.forest_textbox.setObjectName("forest_textbox")
+        self.desert_label = QtWidgets.QLabel(self)
+        self.desert_label.setGeometry(QtCore.QRect(10, 130, 81, 16))
+        self.desert_label.setObjectName("desert_label")
+        self.desert_textbox = QtWidgets.QPlainTextEdit(self)
+        self.desert_textbox.setGeometry(QtCore.QRect(90, 130, 30, 21))
+        self.desert_textbox.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.desert_textbox.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.desert_textbox.setObjectName("desert_textbox")
+        self.forest_label = QtWidgets.QLabel(self)
+        self.forest_label.setGeometry(QtCore.QRect(10, 90, 81, 16))
+        self.forest_label.setObjectName("forest_label")
 
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -59,12 +75,16 @@ class ParametersPopup(QDialog):
         self.dijkstra_radio.setText("Dijkstra")
         self.start_textbox.setPlainText("0, 0")
         self.end_textbox.setPlainText("39, 29")
+        self.desert_label.setText("Desert Weight:")
+        self.forest_label.setText("Forest Weight:")
+        self.desert_textbox.setPlainText("3")
+        self.forest_textbox.setPlainText("2")
         self.visualize_checkBox.setText("visualize algorithm")
         self.visualize_checkBox.setChecked(True)
         self.bfs_radio.setChecked(True)
 
         # set start/end row&col values using default text
-        self.set_start_end_points()
+        self.set_int_values_from_text()
 
         # variables in case values are changed but user presses cancel button
         self.set_previous_variables()
@@ -74,43 +94,25 @@ class ParametersPopup(QDialog):
         self.group.addButton(self.bfs_radio)
         self.group.addButton(self.dijkstra_radio)
 
-        self.buttonBox.buttons()[0].clicked.connect(self.ok_button)  # ok button
-        self.buttonBox.buttons()[1].clicked.connect(self.cancel_button)  # cancel button
+        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.rejected.connect(self.reject)
 
     def closeEvent(self, event):
-        self.cancel_button()
+        self.reject()
 
-    def set_previous_variables(self):
-        self.previous_start_text = self.start_textbox.toPlainText()
-        self.previous_end_text = self.end_textbox.toPlainText()
-        self.previous_visualize = self.visualize_checkBox.isChecked()
-        self.previous_a_star_radio_state = self.a_star_radio.isChecked()
-        self.previous_bfs_radio_state = self.bfs_radio.isChecked()
-        self.previous_dijkstra_radio_state = self.dijkstra_radio.isChecked()
-
-    def set_start_end_points(self):
-        try:
-            start_point_values = self.start_textbox.toPlainText().strip().split(",", maxsplit=1)
-            end_point_values = self.end_textbox.toPlainText().split(",", maxsplit=1)
-            self.start_col = int(start_point_values[0].strip())
-            self.start_row = int(start_point_values[1].strip())
-            self.end_col = int(end_point_values[0].strip())
-            self.end_row = int(end_point_values[1].strip())
-            return True
-        except (ValueError, IndexError) as e:
-            return False
-
-    def ok_button(self):
-        valid_values = self.set_start_end_points()  # test whether input is valid
+    def accept(self):
+        valid_values = self.set_int_values_from_text()  # test whether input is valid
 
         if valid_values:
             self.set_previous_variables()  # changes are valid and confirmed so update previous variables
             self.close()
 
-    def cancel_button(self):
+    def reject(self):
         self.start_textbox.setPlainText(self.previous_start_text)  # user cancelled so restore previous values
         self.end_textbox.setPlainText(self.previous_end_text)
         self.visualize_checkBox.setChecked(self.previous_visualize)
+        self.forest_textbox.setPlainText(self.previous_forest_text)
+        self.desert_textbox.setPlainText(self.previous_desert_text)
 
         # set setExclusive to False so radio states can be reset to previous state
         # otherwise radio buttons cannot be set to False individually
@@ -121,3 +123,27 @@ class ParametersPopup(QDialog):
         self.group.setExclusive(True)
 
         self.close()
+
+    def set_previous_variables(self):
+        self.previous_start_text = self.start_textbox.toPlainText()
+        self.previous_end_text = self.end_textbox.toPlainText()
+        self.previous_visualize = self.visualize_checkBox.isChecked()
+        self.previous_forest_text = self.forest_textbox.toPlainText()
+        self.previous_desert_text = self.desert_textbox.toPlainText()
+        self.previous_a_star_radio_state = self.a_star_radio.isChecked()
+        self.previous_bfs_radio_state = self.bfs_radio.isChecked()
+        self.previous_dijkstra_radio_state = self.dijkstra_radio.isChecked()
+
+    def set_int_values_from_text(self):
+        try:
+            start_point_values = self.start_textbox.toPlainText().strip().split(",", maxsplit=1)
+            end_point_values = self.end_textbox.toPlainText().split(",", maxsplit=1)
+            self.start_col = int(start_point_values[0].strip())
+            self.start_row = int(start_point_values[1].strip())
+            self.end_col = int(end_point_values[0].strip())
+            self.end_row = int(end_point_values[1].strip())
+            self.forest_weight = int(self.forest_textbox.toPlainText())
+            self.desert_weight = int(self.desert_textbox.toPlainText())
+            return True
+        except (ValueError, IndexError) as e:
+            return False

@@ -5,21 +5,18 @@ from math import inf
 
 from PyQt5.QtWidgets import QWidget
 
-from Node import Node
+from node import Node
 
 """
 Adapted from http://theory.stanford.edu/~amitp/GameProgramming/#pathfinding
 """
-DEFAULT_WEIGHT = 1
-FOREST_WEIGHT = 2
-DESERT_WEIGHT = 3
 
 
 class Graph:
     def __init__(self, columns: int, rows: int):
         self.columns = columns
         self.rows = rows
-        self.barrier_nodes = []
+        self.barrier_nodes = set()
 
     """
     ##########################################################################
@@ -44,9 +41,10 @@ class Graph:
     def bfs(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = Queue()
         frontier.put(start)
-        grid.add_frontier(start)
         came_from = dict()
         came_from[start] = None
+
+        grid.add_frontier(start)
 
         while not frontier.empty():
             current = frontier.get()
@@ -89,8 +87,8 @@ class Graph:
 class WeightedGraph(Graph):
     def __init__(self, columns: int, rows: int):
         super().__init__(columns, rows)
-        self.forest_nodes = []
-        self.desert_nodes = []
+        self.forest_nodes = set()
+        self.desert_nodes = set()
 
     """
     ##########################################################################
@@ -100,11 +98,12 @@ class WeightedGraph(Graph):
     def a_star(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = PriorityQueue()
         frontier.put(start, 0)
-        grid.add_frontier(start)
         came_from = dict()
         cost_so_far = dict()
         came_from[start] = None
         cost_so_far[start] = 0
+
+        grid.add_frontier(start)
 
         while not frontier.empty():
             current = frontier.get()
@@ -114,7 +113,7 @@ class WeightedGraph(Graph):
                 break
 
             for next in self.neighbors(current):
-                new_cost = cost_so_far[current] + self.cost(current, next)
+                new_cost = cost_so_far[current] + self.cost(current, next, grid)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
                     priority = new_cost + self.heuristic(next, end)
@@ -132,6 +131,7 @@ class WeightedGraph(Graph):
         cost_so_far = dict()
         came_from[start] = None
         cost_so_far[start] = 0
+
         grid.add_frontier(start)
 
         while not frontier.empty():
@@ -142,7 +142,7 @@ class WeightedGraph(Graph):
                 break
 
             for next in self.neighbors(current):
-                new_cost = cost_so_far[current] + self.cost(current, next)
+                new_cost = cost_so_far[current] + self.cost(current, next, grid)
                 if new_cost < cost_so_far.get(next, inf):
                     cost_so_far[next] = new_cost
                     priority = new_cost
@@ -154,12 +154,12 @@ class WeightedGraph(Graph):
         return self.reconstruct_path(came_from, start, end)
 
     # cost only accounts for weight from the to_node
-    def cost(self, from_node: Node, to_node: Node) -> int:
-        weight = DEFAULT_WEIGHT
+    def cost(self, from_node: Node, to_node: Node, grid: QWidget) -> int:
+        weight = grid.get_default_weight()
         if to_node in self.forest_nodes:
-            weight = FOREST_WEIGHT
+            weight = grid.get_forest_weight()
         if to_node in self.desert_nodes:
-            weight = DESERT_WEIGHT
+            weight = grid.get_desert_weight()
         return weight
 
     """

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>309</width>
-    <height>160</height>
+    <width>310</width>
+    <height>200</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -49,7 +49,7 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>130</y>
+     <y>170</y>
      <width>311</width>
      <height>23</height>
     </rect>
@@ -148,8 +148,8 @@
   <widget class="QCheckBox" name="visualize_checkBox">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>100</y>
+     <x>190</x>
+     <y>130</y>
      <width>121</width>
      <height>17</height>
     </rect>
@@ -162,6 +162,64 @@
    </property>
    <property name="tristate">
     <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QPlainTextEdit" name="forest_textbox">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>90</y>
+     <width>40</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="desert_label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>130</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Desert Weight:</string>
+   </property>
+  </widget>
+  <widget class="QPlainTextEdit" name="desert_textbox">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>130</y>
+     <width>40</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="forest_label">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>90</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Forest Weight:</string>
    </property>
   </widget>
  </widget>
