@@ -6,16 +6,16 @@ from PyQt5.QtWidgets import QDialog, QButtonGroup
 class ParametersPopup(QDialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setFixedHeight(205)
-        self.setFixedWidth(310)
+        self.setFixedHeight(200)
+        self.setFixedWidth(315)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setAttribute(Qt.WA_QuitOnClose, True)
         self.setObjectName("Parameters")
         self.bfs_radio = QtWidgets.QRadioButton(self)
-        self.bfs_radio.setGeometry(QtCore.QRect(250, 70, 82, 17))
+        self.bfs_radio.setGeometry(QtCore.QRect(250, 110, 82, 17))
         self.bfs_radio.setObjectName("bfs_radio")
         self.a_star_radio = QtWidgets.QRadioButton(self)
-        self.a_star_radio.setGeometry(QtCore.QRect(250, 10, 82, 17))
+        self.a_star_radio.setGeometry(QtCore.QRect(250, 50, 82, 17))
         self.a_star_radio.setObjectName("a_star_radio")
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setGeometry(QtCore.QRect(0, 170, 311, 23))
@@ -36,16 +36,16 @@ class ParametersPopup(QDialog):
         self.start_label.setGeometry(QtCore.QRect(10, 10, 61, 16))
         self.start_label.setObjectName("start_label")
         self.algorithm_label = QtWidgets.QLabel(self)
-        self.algorithm_label.setGeometry(QtCore.QRect(140, 10, 101, 16))
+        self.algorithm_label.setGeometry(QtCore.QRect(150, 50, 101, 16))
         self.algorithm_label.setObjectName("algorithm_label")
         self.end_label = QtWidgets.QLabel(self)
         self.end_label.setGeometry(QtCore.QRect(10, 50, 47, 13))
         self.end_label.setObjectName("end_label")
         self.dijkstra_radio = QtWidgets.QRadioButton(self)
-        self.dijkstra_radio.setGeometry(QtCore.QRect(250, 40, 82, 16))
+        self.dijkstra_radio.setGeometry(QtCore.QRect(250, 80, 82, 16))
         self.dijkstra_radio.setObjectName("dijkstra_radio")
         self.visualize_checkBox = QtWidgets.QCheckBox(self)
-        self.visualize_checkBox.setGeometry(QtCore.QRect(180, 130, 120, 17))
+        self.visualize_checkBox.setGeometry(QtCore.QRect(150, 10, 121, 17))
         self.visualize_checkBox.setObjectName("visualize_checkBox")
         self.forest_textbox = QtWidgets.QPlainTextEdit(self)
         self.forest_textbox.setGeometry(QtCore.QRect(90, 90, 30, 21))
@@ -84,7 +84,7 @@ class ParametersPopup(QDialog):
         self.bfs_radio.setChecked(True)
 
         # set start/end row&col values using default text
-        self.set_int_values_from_text()
+        self.set_number_values_from_text()
 
         # variables in case values are changed but user presses cancel button
         self.set_previous_variables()
@@ -101,7 +101,7 @@ class ParametersPopup(QDialog):
         self.reject()
 
     def accept(self):
-        valid_values = self.set_int_values_from_text()  # test whether input is valid
+        valid_values = self.set_number_values_from_text()  # test whether input is valid
 
         if valid_values:
             self.set_previous_variables()  # changes are valid and confirmed so update previous variables
@@ -134,7 +134,7 @@ class ParametersPopup(QDialog):
         self.previous_bfs_radio_state = self.bfs_radio.isChecked()
         self.previous_dijkstra_radio_state = self.dijkstra_radio.isChecked()
 
-    def set_int_values_from_text(self):
+    def set_number_values_from_text(self):
         try:
             start_point_values = self.start_textbox.toPlainText().strip().split(",", maxsplit=1)
             end_point_values = self.end_textbox.toPlainText().split(",", maxsplit=1)
@@ -142,8 +142,8 @@ class ParametersPopup(QDialog):
             self.start_row = int(start_point_values[1].strip())
             self.end_col = int(end_point_values[0].strip())
             self.end_row = int(end_point_values[1].strip())
-            self.forest_weight = int(self.forest_textbox.toPlainText())
-            self.desert_weight = int(self.desert_textbox.toPlainText())
+            self.forest_weight = float(self.forest_textbox.toPlainText())
+            self.desert_weight = float(self.desert_textbox.toPlainText())
             return True
         except (ValueError, IndexError) as e:
             return False

@@ -16,13 +16,18 @@ class Graph:
     def __init__(self, columns: int, rows: int):
         self.columns = columns
         self.rows = rows
-        self.barrier_nodes = set()
+        self.startpoint_node: Node = Node(0, 0)
+        self.endpoint_node: Node = Node(39, 29)
+        self.frontier_nodes: set = set()
+        self.barrier_nodes: set = set()
+        self.path_nodes: list = []
 
     """
     ##########################################################################
                                 Public Functions
     ##########################################################################
     """
+
     def neighbors(self, node: Node):
         x = node.x
         y = node.y
@@ -43,12 +48,11 @@ class Graph:
         frontier.put(start)
         came_from = dict()
         came_from[start] = None
-
-        grid.add_frontier(start)
+        self.frontier_nodes.add(start)
 
         while not frontier.empty():
             current = frontier.get()
-            grid.remove_frontier(current)
+            self.remove_frontier_node(current)
 
             if current == end:
                 break
@@ -58,30 +62,40 @@ class Graph:
                     frontier.put(next)
                     came_from[next] = current
 
-                    grid.add_frontier(next)
+                    self.frontier_nodes.add(next)
+                    grid.repaint_grid()
 
         return self.reconstruct_path(came_from, start, end)
 
-    """
-    ##########################################################################
-                                Static Functions
-    ##########################################################################
-    """
-    @staticmethod
-    def reconstruct_path(came_from: Dict[Node, Node], start: Node, end: Node) -> []:
-        current = end
-        path = []
-        while current != start:
-            path.append(current)
-            current = came_from[current]
-        path.reverse()
+    def add_barrier_node(self, node) -> None:
+        self.barrier_nodes.add(node)
 
+    def remove_frontier_node(self, node) -> None:
         try:
-            path.remove(end)
-        except ValueError:
+            self.frontier_nodes.remove(node)
+        except KeyError:
             pass
 
-        return path
+    def clear_path_nodes(self):
+        self.path_nodes.clear()
+
+    def clear_frontier_nodes(self):
+        self.frontier_nodes.clear()
+
+    def reconstruct_path(self, came_from: Dict[Node, Node], start: Node, end: Node) -> None:
+        current = end
+        try:
+            while current != start:
+                self.path_nodes.append(current)
+                current = came_from[current]
+            self.path_nodes.reverse()
+        except KeyError:
+            pass
+
+        try:
+            self.path_nodes.remove(end)
+        except ValueError:
+            pass
 
 
 class WeightedGraph(Graph):
@@ -89,12 +103,16 @@ class WeightedGraph(Graph):
         super().__init__(columns, rows)
         self.forest_nodes = set()
         self.desert_nodes = set()
+        self.default_weight: float = 1
+        self.forest_weight: float = 2
+        self.desert_weight: float = 3
 
     """
     ##########################################################################
                                 Public Functions
     ##########################################################################
     """
+
     def a_star(self, start: Node, end: Node, grid: QWidget) -> []:
         frontier = PriorityQueue()
         frontier.put(start, 0)
@@ -102,25 +120,25 @@ class WeightedGraph(Graph):
         cost_so_far = dict()
         came_from[start] = None
         cost_so_far[start] = 0
-
-        grid.add_frontier(start)
+        self.frontier_nodes.add(start)
 
         while not frontier.empty():
             current = frontier.get()
-            grid.remove_frontier(current)
+            self.remove_frontier_node(current)
 
             if current == end:
                 break
 
             for next in self.neighbors(current):
-                new_cost = cost_so_far[current] + self.cost(current, next, grid)
+                new_cost = cost_so_far[current] + self.cost(current, next)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
                     priority = new_cost + self.heuristic(next, end)
                     frontier.put(next, priority)
                     came_from[next] = current
 
-                    grid.add_frontier(next)
+                    self.frontier_nodes.add(next)
+                    grid.repaint_grid()
 
         return self.reconstruct_path(came_from, start, end)
 
@@ -131,36 +149,53 @@ class WeightedGraph(Graph):
         cost_so_far = dict()
         came_from[start] = None
         cost_so_far[start] = 0
-
-        grid.add_frontier(start)
+        self.frontier_nodes.add(start)
 
         while not frontier.empty():
             current = frontier.get()
-            grid.remove_frontier(current)
+            self.remove_frontier_node(current)
 
             if current == end:
                 break
 
             for next in self.neighbors(current):
-                new_cost = cost_so_far[current] + self.cost(current, next, grid)
+                new_cost = cost_so_far[current] + self.cost(current, next)
                 if new_cost < cost_so_far.get(next, inf):
                     cost_so_far[next] = new_cost
                     priority = new_cost
                     frontier.put(next, priority)
                     came_from[next] = current
 
-                    grid.add_frontier(next)
+                    self.frontier_nodes.add(next)
+                    grid.repaint_grid()
 
         return self.reconstruct_path(came_from, start, end)
 
     # cost only accounts for weight from the to_node
-    def cost(self, from_node: Node, to_node: Node, grid: QWidget) -> int:
-        weight = grid.get_default_weight()
+    def cost(self, from_node: Node, to_node: Node) -> float:
+        weight = self.default_weight
         if to_node in self.forest_nodes:
-            weight = grid.get_forest_weight()
+            weight = self.forest_weight
         if to_node in self.desert_nodes:
-            weight = grid.get_desert_weight()
+            weight = self.desert_weight
         return weight
+
+    def add_forest_node(self, node: Node) -> None:
+        self.forest_nodes.add(node)
+
+    def add_desert_node(self, node) -> None:
+        self.desert_nodes.add(node)
+
+    def remove_terrain_nodes(self, node: Node) -> None:
+        for terrain in self.barrier_nodes, self.desert_nodes, self.forest_nodes:
+            try:
+                terrain.remove(node)
+            except KeyError:
+                pass
+
+    def clear_terrain_nodes(self) -> None:
+        for terrain in self.barrier_nodes, self.desert_nodes, self.forest_nodes:
+            terrain.clear()
 
     """
     ##########################################################################
@@ -176,7 +211,7 @@ class WeightedGraph(Graph):
 
 class PriorityQueue:
     def __init__(self):
-        self.elements = []
+        self.elements: list = []
 
     def empty(self) -> bool:
         return not self.elements
@@ -186,3 +221,7 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
+
+
+if __name__ == "__main__":
+    pq = PriorityQueue()
