@@ -1,5 +1,5 @@
 # Pathfinding Algorithm Visualizer
-PyQt5 desktop app that visualizes breath-first-search, Dijkstra, and A* pathfinding algorithms.
+PyQt5 desktop app that visualizes breadth-first-search, Dijkstra, and A* pathfinding algorithms.
 
 ![pathfinding_algo_ui](https://user-images.githubusercontent.com/4152448/118221399-5efdfc00-b432-11eb-91a0-84fc95a560e5.png)
 
