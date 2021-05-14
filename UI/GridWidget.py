@@ -1,10 +1,8 @@
-import random
-
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QRectF, QEvent
 from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import QWidget
-from qtpy import QtCore
+from PyQt5 import QtCore
 
 from node import Node
 
@@ -80,10 +78,6 @@ class GridUI(QWidget):
             row = int(event.y() // self.square_size)
 
             self.add_node(col, row, mouse_position)
-
-        if event.type() == QEvent.MouseButtonRelease:
-            self.update()
-
         return False
 
     def add_node(self, col, row, mouse_position):
@@ -98,8 +92,3 @@ class GridUI(QWidget):
                 self.graph.add_forest_node(node)
             else:
                 self.graph.add_barrier_node(node)
-
-    def repaint_grid(self):
-        n = random.random()
-        if self.visualize_algorithm and n >= 0.60:
-            self.repaint()

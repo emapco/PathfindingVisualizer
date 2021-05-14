@@ -1,12 +1,42 @@
 import sys
 
-from PyQt5 import QtCore
+from PyQt5.QtCore import QThread, pyqtSignal, QObject, pyqtSlot
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QHBoxLayout, QPushButton, QWidget
 
 from graph import WeightedGraph
 from node import Node
 from UI.GridWidget import GridUI
 from UI.ParametersDialog import ParametersPopup
+
+
+class UIQObj(QObject):
+    start = pyqtSignal(object)
+    update = pyqtSignal(object)
+
+    def __init__(self):
+        super(UIQObj, self).__init__()
+
+    @pyqtSlot()
+    def run(self):
+        while True:
+            QThread.usleep(1)
+            self.update.emit(None)
+
+
+class PathQObj(QObject):
+    start = pyqtSignal(WeightedGraph, str, Node, Node)
+
+    def __init__(self):
+        super(PathQObj, self).__init__()
+
+    @pyqtSlot(WeightedGraph, str, Node, Node)
+    def run(self, graph, option, start, end):
+        if option == 'a':
+            graph.a_star(start, end)
+        elif option == "d":
+            graph.dijkstra(start, end)
+        else:
+            graph.bfs(start, end)
 
 
 class MainWindow(QMainWindow):
@@ -45,6 +75,19 @@ class MainWindow(QMainWindow):
         self.parameters = ParametersPopup()
         self.parameters.buttonBox.accepted.connect(self.update_graph_with_parameters)
 
+        self.ui_thread = QThread()
+        self.ui_thread.start()
+        self.ui_QObj = UIQObj()
+        self.ui_QObj.moveToThread(self.ui_thread)
+        self.ui_QObj.update.connect(self.handle_UI_update)
+        self.ui_thread.started.connect(self.ui_QObj.run)
+
+        self.path_thread = QThread()
+        self.path_thread.start()
+        self.path_QObj = PathQObj()
+        self.path_QObj.moveToThread(self.path_thread)
+        self.path_QObj.start.connect(self.path_QObj.run)
+
     def closeEvent(self, event) -> None:
         sys.exit()
 
@@ -55,7 +98,6 @@ class MainWindow(QMainWindow):
     def clear_path(self) -> None:
         self.graph.clear_path_nodes()
         self.graph.clear_frontier_nodes()
-        self.grid_ui.update()
 
     def show_parameter_popup(self) -> None:
         self.parameters.raise_()
@@ -66,26 +108,26 @@ class MainWindow(QMainWindow):
         start_col = self.parameters.start_col
         end_row = self.parameters.end_row
         end_col = self.parameters.end_col
-        self.graph.set_startpoint_node = Node(start_col, start_row)
-        self.graph.set_endpoint_node = Node(end_col, end_row)
-        self.graph.set_desert_weight = self.parameters.desert_weight
-        self.graph.set_forest_weight = self.parameters.forest_weight
+        self.graph.startpoint_node = Node(start_col, start_row)
+        self.graph.endpoint_node = Node(end_col, end_row)
+        self.graph.desert_weight = self.parameters.desert_weight
+        self.graph.forest_weight = self.parameters.forest_weight
 
         self.grid_ui.visualize_algorithm = self.parameters.visualize_checkBox.isChecked()
 
     def generate_path(self) -> None:
-        self.clear_path()
-
         start = self.graph.startpoint_node
         end = self.graph.endpoint_node
+        option = "b"
         if self.parameters.a_star_radio.isChecked():
-            self.graph.a_star(start, end, self.grid_ui)
+            option = "a"
         elif self.parameters.dijkstra_radio.isChecked():
-            self.graph.dijkstra(start, end, self.grid_ui)
-        elif self.parameters.bfs_radio.isChecked():
-            self.graph.bfs(start, end, self.grid_ui)
+            option = "d"
 
-        self.graph.clear_frontier_nodes()
+        self.path_QObj.start.emit(self.graph, option, start, end)
+
+    @pyqtSlot()
+    def handle_UI_update(self):
         self.grid_ui.update()
 
 
