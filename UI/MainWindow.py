@@ -10,8 +10,8 @@ from UI.ParametersDialog import ParametersPopup
 
 
 class UIQObj(QObject):
-    start = pyqtSignal(object)
-    update = pyqtSignal(object)
+    start = pyqtSignal()
+    update = pyqtSignal()
 
     def __init__(self):
         super(UIQObj, self).__init__()
@@ -19,8 +19,8 @@ class UIQObj(QObject):
     @pyqtSlot()
     def run(self):
         while True:
-            QThread.usleep(1)
-            self.update.emit(None)
+            QThread.usleep(50)
+            self.update.emit()
 
 
 class PathQObj(QObject):
@@ -79,8 +79,9 @@ class MainWindow(QMainWindow):
         self.ui_thread.start()
         self.ui_QObj = UIQObj()
         self.ui_QObj.moveToThread(self.ui_thread)
-        self.ui_QObj.update.connect(self.handle_UI_update)
-        self.ui_thread.started.connect(self.ui_QObj.run)
+        self.ui_QObj.update.connect(self.handle_ui_update)
+        self.ui_QObj.start.connect(self.ui_QObj.run)
+        self.ui_QObj.start.emit()
 
         self.path_thread = QThread()
         self.path_thread.start()
@@ -112,8 +113,7 @@ class MainWindow(QMainWindow):
         self.graph.endpoint_node = Node(end_col, end_row)
         self.graph.desert_weight = self.parameters.desert_weight
         self.graph.forest_weight = self.parameters.forest_weight
-
-        self.grid_ui.visualize_algorithm = self.parameters.visualize_checkBox.isChecked()
+        self.graph.visualize_algorithm = self.parameters.visualize_checkBox.isChecked()
 
     def generate_path(self) -> None:
         start = self.graph.startpoint_node
@@ -127,7 +127,7 @@ class MainWindow(QMainWindow):
         self.path_QObj.start.emit(self.graph, option, start, end)
 
     @pyqtSlot()
-    def handle_UI_update(self):
+    def handle_ui_update(self):
         self.grid_ui.update()
 
 

@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt, QRectF, QEvent
+from PyQt5.QtCore import Qt, QRectF, QEvent, QPoint
 from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtWidgets import QWidget
 from PyQt5 import QtCore
@@ -17,7 +17,7 @@ class GridUI(QWidget):
         self.graph = graph
         self.visualize_algorithm = True
 
-    def resizeEvent(self, event: QEvent) -> None:
+    def resizeEvent(self, event) -> None:
         # compute the square size based on the aspect ratio, assuming that the
         # column and row numbers are fixed
         reference = self.width() * self.rows / self.columns
@@ -31,7 +31,7 @@ class GridUI(QWidget):
         self.grid_width = self.square_size * self.columns
         self.grid_height = self.square_size * self.rows
 
-    def paintEvent(self, event):
+    def paintEvent(self, event) -> None:
         qp = QPainter(self)
         qp.translate(.5, .5)  # translate the painter by half a pixel to ensure correct line painting
         qp.setRenderHints(qp.Antialiasing)
@@ -48,16 +48,24 @@ class GridUI(QWidget):
             qp.drawLine(x, top, x, top + self.grid_height)
             x += self.square_size
 
-        # draw barrier rectangles
-        self.paintRect(qp, Qt.black, self.graph.barrier_nodes)
-        self.paintRect(qp, Qt.darkGreen, self.graph.forest_nodes)
-        self.paintRect(qp, QColor(255, 140, 0), self.graph.desert_nodes)
-        self.paintRect(qp, Qt.yellow, self.graph.path_nodes)
-        self.paintRect(qp, Qt.blue, self.graph.frontier_nodes)
-        self.paintRect(qp, Qt.green, (self.graph.startpoint_node,))
-        self.paintRect(qp, Qt.red, (self.graph.endpoint_node,))
+        self.paint_rectangles(qp, Qt.black, self.graph.barrier_nodes)
+        self.paint_rectangles(qp, Qt.darkGreen, self.graph.forest_nodes)
+        self.paint_rectangles(qp, QColor(255, 140, 0), self.graph.desert_nodes)
+        self.paint_rectangles(qp, Qt.yellow, self.graph.path_nodes)
+        self.paint_rectangles(qp, Qt.blue, self.graph.frontier_nodes)
+        self.paint_rectangles(qp, Qt.green, (self.graph.startpoint_node,))
+        self.paint_rectangles(qp, Qt.red, (self.graph.endpoint_node,))
 
-    def paintRect(self, qp, color, rects):
+    def eventFilter(self, QObject, event) -> bool:
+        if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseMove:
+            mouse_position = event.pos()
+            col = int(event.x() // self.square_size)
+            row = int(event.y() // self.square_size)
+
+            self.add_node(col, row, mouse_position)
+        return False
+
+    def paint_rectangles(self, qp: QPainter, color: QColor, nodes) -> None:
         left = (self.width() - self.grid_width) / 2
         top = (self.height() - self.grid_height) / 2
 
@@ -67,20 +75,11 @@ class GridUI(QWidget):
         object_rect = QRectF(margin, margin, object_size, object_size)
 
         qp.setBrush(color)
-        for node in rects:
+        for node in nodes:
             qp.drawRect(object_rect.translated(
                 left + node.x * self.square_size, top + node.y * self.square_size))
 
-    def eventFilter(self, QObject, event):
-        if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseMove:
-            mouse_position = event.pos()
-            col = int(event.x() // self.square_size)
-            row = int(event.y() // self.square_size)
-
-            self.add_node(col, row, mouse_position)
-        return False
-
-    def add_node(self, col, row, mouse_position):
+    def add_node(self, col: int, row: int, mouse_position) -> None:
         if self.rect().contains(mouse_position):
             node = Node(col, row)
             modifiers = QtWidgets.QApplication.keyboardModifiers()

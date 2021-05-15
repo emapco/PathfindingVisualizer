@@ -19,7 +19,7 @@ class ParametersPopup(QDialog):
         self.a_star_radio.setObjectName("a_star_radio")
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setGeometry(QtCore.QRect(0, 170, 311, 23))
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
         self.end_textbox = QtWidgets.QPlainTextEdit(self)
@@ -75,8 +75,8 @@ class ParametersPopup(QDialog):
         self.dijkstra_radio.setText("Dijkstra")
         self.start_textbox.setPlainText("0, 0")
         self.end_textbox.setPlainText("39, 29")
-        self.desert_label.setText("Desert Weight:")
-        self.forest_label.setText("Forest Weight:")
+        self.desert_label.setText("Orange Weight:")
+        self.forest_label.setText("Green Weight:")
         self.desert_textbox.setPlainText("3")
         self.forest_textbox.setPlainText("2")
         self.visualize_checkBox.setText("visualize algorithm")
@@ -86,7 +86,7 @@ class ParametersPopup(QDialog):
         # set start/end row&col values using default text
         self.set_number_values_from_text()
 
-        # variables in case values are changed but user presses cancel button
+        # in case values are changed but user presses cancel button
         self.set_previous_variables()
 
         self.group = QButtonGroup()
@@ -101,14 +101,15 @@ class ParametersPopup(QDialog):
         self.reject()
 
     def accept(self):
-        valid_values = self.set_number_values_from_text()  # test whether input is valid
+        valid_values = self.set_number_values_from_text()  # check whether input is valid
 
         if valid_values:
             self.set_previous_variables()  # changes are valid and confirmed so update previous variables
             self.close()
 
     def reject(self):
-        self.start_textbox.setPlainText(self.previous_start_text)  # user cancelled so restore previous values
+        # user cancelled so restore previous values
+        self.start_textbox.setPlainText(self.previous_start_text)
         self.end_textbox.setPlainText(self.previous_end_text)
         self.visualize_checkBox.setChecked(self.previous_visualize)
         self.forest_textbox.setPlainText(self.previous_forest_text)

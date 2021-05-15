@@ -6,12 +6,14 @@ class Node:
     x: int
     y: int
 
-    """
-    ##########################################################################
-                                Public Functions
-    ##########################################################################
-    """
     def get_coordinates(self) -> (int, int):
+        """
+        Public function used to return the node's x and y values as a tuple
+        Returns:
+        --------
+        <value> : tuple
+            tuple representation of the node's coordinates
+        """
         return astuple(self)
 
 
