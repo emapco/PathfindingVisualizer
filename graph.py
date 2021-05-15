@@ -305,13 +305,13 @@ class WeightedGraph(Graph):
          the (Manhattan distance, L1) heuristic cost.
          -----------
          n1 : Node
-             The url the request is being made to
+             One of the nodes needed to compute the cost
          n2 : Node
-             The parameters you want to pass in
+             Other node needed to compute the cost
          Returns:
          --------
          <value> : float
-             The heuristic cost
+             The Manhattan distance heuristic cost
         """
         x1, y1 = n1.get_coordinates()
         x2, y2 = n2.get_coordinates()
